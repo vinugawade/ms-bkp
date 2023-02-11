@@ -37,13 +37,15 @@ Options:
 
 # Function to export databases.
 function export_db() {
-	echo $BACKUP_PATH
 	if [ "$MYSQL_PASS" ]; then
 		MYSQL_PERMS+=" -p$MYSQL_PASS"
 	fi
 
 	# Check backup path and create it if necessary
 	DBS="$($MYSQL $MYSQL_PERMS -Bse 'show databases')"
+
+	# Create path if it doesn't exist
+	[ ! -d $BACKUP_PATH ] && mkdir -p $BACKUP_PATH || echo -e "$BACKUP_PATH exist \n"
 
 	# Change permissions so anyone can access backups
 	$CHOWN -R "$(id -u):$(id -g)" $BKP_PATH
@@ -55,16 +57,13 @@ function export_db() {
 			continue
 		fi
 
-		# Create path if it doesn't exist
-		[ ! -d $BACKUP_PATH ] && mkdir -p $BACKUP_PATH || :
-
 		echo -e "$(date +"%d-%m-%Y %H:%M:%S") Backing up $DB\n"
 		FILE="$BACKUP_PATH/$DB.sql.gz"
 		$MYSQLDUMP $MYSQL_PERMS $DB | $GZIP --best > $FILE
-		echo -e "$(date +"%d-%m-%Y %H:%M:%S") $DB...done! \n"
+		echo -e "$(date +"%d-%m-%Y %H:%M:%S") $DB ...done! \n"
 	done
 
-	echo "$(date +"%d-%m-%Y %H:%M:%S") All Database Backup at $BACKUP_PATH"
+	echo "$(date +"%d-%m-%Y %H:%M:%S") All Database Backup at $BACKUP_PATH \n"
 }
 
 # Functio to open the backup folder after the backup is complete.
