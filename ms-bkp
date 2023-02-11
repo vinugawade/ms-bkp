@@ -1,0 +1,105 @@
+#!/bin/bash
+# Script to backup all mysql tables as separate compressed files.
+# Creator :- Vinay Gawade.
+# Twitter :- @VinuGawade
+
+# ms-bkp script version.
+VERSION="1.0.0"
+
+if [ -f .env ]; then
+	export $(echo $(cat .env | sed 's/#.*//g' | xargs) | envsubst)
+fi
+
+# Paths to programs
+MYSQL="$(which mysql)"
+MYSQLDUMP="$(which mysqldump)"
+CHOWN="$(which chown)"
+CHMOD="$(which chmod)"
+GZIP="$(which gzip)"
+
+# Misc vars
+NOW="$(date +"%d-%m-%Y")"
+
+BACKUP_PATH+="$BKP_PATH/BKP-$NOW"
+MYSQL_PERMS="-u $MYSQL_USER -h $MYSQL_HOST"
+
+# Function to display error/help messages.
+function show_msg() {
+	[[ $1 == "invalid" ]] && echo -e "Invalid option"
+	[[ $1 == "help" ]] && echo "Usage:
+ms-bkp [option]
+Backup all mysql tables as separate compressed files.
+Options:
+	-h, --help                 display this help and exit
+	-v, --version              display ms-bkp script version"
+	exit 1
+}
+
+# Function to export databases.
+function export_db() {
+	echo $BACKUP_PATH
+	if [ "$MYSQL_PASS" ]; then
+		MYSQL_PERMS+=" -p$MYSQL_PASS"
+	fi
+
+	# Check backup path and create it if necessary
+	DBS="$($MYSQL $MYSQL_PERMS -Bse 'show databases')"
+
+	# Change permissions so anyone can access backups
+	$CHOWN -R "$(id -u):$(id -g)" $BKP_PATH
+	$CHMOD -R 0777 $BKP_PATH
+
+	for DB in $DBS; do
+		if [[ "$IGNORE" =~ .*"$DB"*. ]]; then
+			echo -e "$(date +"%d-%m-%Y %H:%M:%S") Skipping $DB \n"
+			continue
+		fi
+
+		# Create path if it doesn't exist
+		[ ! -d $BACKUP_PATH ] && mkdir -p $BACKUP_PATH || :
+
+		echo -e "$(date +"%d-%m-%Y %H:%M:%S") Backing up $DB\n"
+		FILE="$BACKUP_PATH/$DB.sql.gz"
+		$MYSQLDUMP $MYSQL_PERMS $DB | $GZIP --best > $FILE
+		echo -e "$(date +"%d-%m-%Y %H:%M:%S") $DB...done! \n"
+	done
+
+	echo "$(date +"%d-%m-%Y %H:%M:%S") All Database Backup at $BACKUP_PATH"
+}
+
+# Functio to open the backup folder after the backup is complete.
+function open_bkp_dir() {
+	read -p "Open $BACKUP_PATH Folder?(y/n)[n] " -n 1 -r
+	echo
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+		if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+			nautilus $BKP_PATH > /dev/null
+		elif [[ "$OSTYPE" == "darwin"* ]]; then
+			open $BKP_PATH > /dev/null
+		fi
+	fi
+	exit 1
+}
+
+# Check input value.
+if [ $# -gt 1 ]; then
+	echo -e "Too many arguments:- $*"
+	exit 1
+else
+	# Check input and show help message.
+	if [[ ($* == "--help") || ($* == "-h") ]]; then
+		show_msg help
+	elif [[ ($* == "--version") || ($* == "-v") ]]; then
+		echo -e "ms-bkp v${VERSION} \nVisit :- https://vinugawade.github.io/ms-bkp"
+		exit 1
+	else
+		if [ $# -eq 0 ]; then
+			export_db
+			open_bkp_dir
+		else
+			show_msg invalid
+		fi
+	fi
+fi
+
+exit 0
