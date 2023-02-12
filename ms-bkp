@@ -52,11 +52,13 @@ function export_db() {
 	$CHMOD -R 0777 $BKP_PATH
 
 	for DB in $DBS; do
+		# Regular expression that checks if the database name is in the `IGNORE` variable.
 		if [[ "$IGNORE" =~ .*"$DB"*. ]]; then
 			echo -e "$(date +"%d-%m-%Y %H:%M:%S") Skipping $DB.\n"
 			continue
 		fi
 
+		# Loop that loops through all the databases on the server and backs them up.
 		echo -e "$(date +"%d-%m-%Y %H:%M:%S") Backing up $DB.\n"
 		FILE="$BACKUP_PATH/$DB.sql.gz"
 		$MYSQLDUMP $MYSQL_LOGIN $DB | $GZIP --best > $FILE
@@ -66,7 +68,7 @@ function export_db() {
 	echo -e "$(date +"%d-%m-%Y %H:%M:%S") \xE2\x9C\x94 All Database Backup at $BACKUP_PATH\n"
 }
 
-# Functio to open the backup folder after the backup is complete.
+# Function to open the backup folder after the backup is complete.
 function open_bkp_dir() {
 	read -p "Open $BACKUP_PATH Folder?(y/n)[n] " -n 1 -r
 	echo
@@ -85,13 +87,15 @@ if [ $# -gt 1 ]; then
 	echo -e "Too many arguments:- $*"
 	exit 1
 else
-	# Check input and show help message.
+	# Check input and show messages as per options.
 	if [[ ($* == "--help") || ($* == "-h") ]]; then
 		show_msg help
 	elif [[ ($* == "--version") || ($* == "-v") ]]; then
 		echo -e "ms-bkp v${VERSION} \nVisit :- https://vinugawade.github.io/ms-bkp"
 		exit 1
 	else
+		# If the script is being run with no arguments. If it is,
+		# it will run the `export_db` and then the `open_bkp_dir` function.
 		if [ $# -eq 0 ]; then
 			export_db
 			open_bkp_dir
