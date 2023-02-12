@@ -21,7 +21,7 @@ GZIP="$(which gzip)"
 NOW="$(date +"%d-%m-%Y")"
 
 BACKUP_PATH+="$BKP_PATH/BKP-$NOW"
-MYSQL_PERMS="-u $MYSQL_USER -h $MYSQL_HOST"
+MYSQL_LOGIN="-u $MYSQL_USER -h $MYSQL_HOST"
 
 # Function to display error/help messages.
 function show_msg() {
@@ -38,11 +38,11 @@ Options:
 # Function to export databases.
 function export_db() {
 	if [ "$MYSQL_PASS" ]; then
-		MYSQL_PERMS+=" -p$MYSQL_PASS"
+		MYSQL_LOGIN+=" -p$MYSQL_PASS"
 	fi
 
 	# Check backup path and create it if necessary
-	DBS="$($MYSQL $MYSQL_PERMS -Bse 'show databases')"
+	DBS="$($MYSQL $MYSQL_LOGIN -Bse 'show databases')"
 
 	# Create path if it doesn't exist
 	[ ! -d $BACKUP_PATH ] && mkdir -p $BACKUP_PATH || echo -e "$BACKUP_PATH exist \n"
@@ -53,17 +53,17 @@ function export_db() {
 
 	for DB in $DBS; do
 		if [[ "$IGNORE" =~ .*"$DB"*. ]]; then
-			echo -e "$(date +"%d-%m-%Y %H:%M:%S") Skipping $DB \n"
+			echo -e "$(date +"%d-%m-%Y %H:%M:%S") Skipping $DB.\n"
 			continue
 		fi
 
-		echo -e "$(date +"%d-%m-%Y %H:%M:%S") Backing up $DB\n"
+		echo -e "$(date +"%d-%m-%Y %H:%M:%S") Backing up $DB.\n"
 		FILE="$BACKUP_PATH/$DB.sql.gz"
-		$MYSQLDUMP $MYSQL_PERMS $DB | $GZIP --best > $FILE
-		echo -e "$(date +"%d-%m-%Y %H:%M:%S") $DB ...done! \n"
+		$MYSQLDUMP $MYSQL_LOGIN $DB | $GZIP --best > $FILE
+		echo -e "$(date +"%d-%m-%Y %H:%M:%S") \xE2\x9C\x94 $DB Backup Done!\n"
 	done
 
-	echo "$(date +"%d-%m-%Y %H:%M:%S") All Database Backup at $BACKUP_PATH \n"
+	echo -e "$(date +"%d-%m-%Y %H:%M:%S") \xE2\x9C\x94 All Database Backup at $BACKUP_PATH\n"
 }
 
 # Functio to open the backup folder after the backup is complete.
