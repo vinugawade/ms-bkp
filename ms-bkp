@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to backup all mysql tables as separate compressed files.
+# Script to backup all mysql databases as separate compressed files.
 # Creator :- Vinay Gawade.
 # Twitter :- @VinuGawade
 
