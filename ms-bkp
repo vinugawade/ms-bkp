@@ -30,8 +30,12 @@ function show_msg() {
 ms-bkp [option]
 Backup all mysql tables as separate compressed files.
 Options:
-	-h, --help                 display this help and exit
-	-v, --version              display ms-bkp script version"
+	-c,  --configs              display saved configs
+	-sc, --set-config           set mysql username, password & host
+	-e,  --exclude-db           add database to ignore backup list
+	-i,  --include-db           remove database from ignore backup list
+	-h,  --help                 display help and exit
+	-v,  --version              display ms-bkp script version"
 	exit 1
 }
 
@@ -92,6 +96,18 @@ else
 		show_msg help
 	elif [[ ($* == "--version") || ($* == "-v") ]]; then
 		echo -e "ms-bkp v${VERSION} \nVisit :- https://vinugawade.github.io/ms-bkp"
+		exit 1
+	elif [[ ($* == "--configs") || ($* == "-c") ]]; then
+		echo -e "ms-bkp show all configs"
+		exit 1
+	elif [[ ($* == "--set-config") || ($* == "-sc") ]]; then
+		echo -e "ms-bkp init config"
+		exit 1
+	elif [[ ($* == "--exclude-db") || ($* == "-e") ]]; then
+		echo -e "ms-bkp add DB in ignore list"
+		exit 1
+	elif [[ ($* == "--include-db") || ($* == "-i") ]]; then
+		echo -e "ms-bkp remove DB from ignore list"
 		exit 1
 	else
 		# If the script is being run with no arguments. If it is,
