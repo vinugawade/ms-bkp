@@ -3,6 +3,10 @@
 # Get the current date in format DD-MM-YYYY
 NOW=$(date +"%d-%m-%Y")
 
+# Define default values
+DEFAULT_BACKUP_PATH="$HOME/Downloads"
+DEFAULT_ONLY_DB=""
+
 # Function to export databases
 function export_dbs() {
     local BACKUP_PATH="$1"
@@ -11,16 +15,15 @@ function export_dbs() {
 
     # Exclude default databases
     IGNORE=("test" "information_schema" "mysql" "performance_schema" "sys")
-    IGNORE_STR=$(printf "'%s'," "${IGNORE[@]}")
-    IGNORE_STR=${IGNORE_STR%,}
+
+    # TODO: fix multiple skip dbs not working like db1,db2 or db1, db2
+    # Prompt the user for databases to skip
+    read -p "Enter databases to skip (comma-separated): " SKIP_DATABASES
+    read -ra SKIP_ARRAY <<< "$SKIP_DATABASES"
+    IGNORE+=("${SKIP_ARRAY[@]}")
 
     # Check and create the backup path
-    if [[ -z "$BACKUP_PATH" ]]; then
-        # Create the backup path in the Downloads folder based on the user's operating system
-        BACKUP_PATH="$HOME/Downloads"
-    fi
-
-    # Create the path if it doesn't exist
+    BACKUP_PATH=${BACKUP_PATH:-$DEFAULT_BACKUP_PATH}
     [ ! -d "$BACKUP_PATH" ] && mkdir -p "$BACKUP_PATH" || echo "$BACKUP_PATH exists"
 
     # Check if the path was created successfully
@@ -30,10 +33,14 @@ function export_dbs() {
     fi
 
     # Export databases
-    databases=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;" --skip-column-names | grep -Ev "^($IGNORE_STR)$" | grep -Ev "performance_schema")
-    for db in $databases; do
-        compress_db "$BACKUP_PATH" "$db" "$MYSQL_USER" "$MYSQL_PASSWORD"
-    done
+    if [ -n "$ONLY_DB" ]; then
+        compress_db "$BACKUP_PATH" "$ONLY_DB" "$MYSQL_USER" "$MYSQL_PASSWORD"
+    else
+        databases=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;" --skip-column-names | grep -Ev "$(IFS="|"; echo "${IGNORE[*]}")")
+        for db in $databases; do
+            compress_db "$BACKUP_PATH" "$db" "$MYSQL_USER" "$MYSQL_PASSWORD"
+        done
+    fi
 
     # Change permissions of the backup folder
     change_permissions "$BACKUP_PATH"
@@ -98,18 +105,56 @@ function open_bkp_dir() {
     fi
 }
 
-# Check if MySQL username and password were provided as arguments
-if [[ $# -eq 3 ]]; then
-    MYSQL_USER="$1"
-    MYSQL_PASSWORD="$2"
-    export_dbs "$3" "$MYSQL_USER" "$MYSQL_PASSWORD"
-else
-    # Prompt the user for MySQL credentials and export path
-    echo "MySQL credentials required:"
-    read -p "MySQL username: " MYSQL_USER
-    read -s -p "MySQL password: " MYSQL_PASSWORD
-    echo
-    read -p "Export path (leave empty for default): " EXPORT_PATH
+# Function to display the help message
+function display_help() {
+    echo "Usage: $(basename "$0") [OPTIONS]
+Options:
+  -u, --user          MySQL username
+  -p, --password      MySQL password
+  -o, --only-db       Export only the specified database
+  -d, --destination   Destination path for the backup (default: $DEFAULT_BACKUP_PATH)
+  -h, --help          Display this help message"
+}
 
-    export_dbs "$EXPORT_PATH" "$MYSQL_USER" "$MYSQL_PASSWORD"
+# Parse the command-line options
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -u|--user)
+            MYSQL_USER="$2"
+            shift
+            shift
+            ;;
+        -p|--password)
+            MYSQL_PASSWORD="$2"
+            shift
+            shift
+            ;;
+        -o|--only-db)
+            ONLY_DB="$2"
+            shift
+            shift
+            ;;
+        -d|--destination)
+            DEFAULT_BACKUP_PATH="$2"
+            shift
+            shift
+            ;;
+        -h|--help)
+            display_help
+            exit 0
+            ;;
+        *)
+            echo "Invalid option: $1"
+            display_help
+            exit 1
+            ;;
+    esac
+done
+
+# Check if MySQL username and password were provided as options
+if [[ -n "$MYSQL_USER" && -n "$MYSQL_PASSWORD" ]]; then
+    export_dbs "$DEFAULT_BACKUP_PATH" "$MYSQL_USER" "$MYSQL_PASSWORD"
+else
+    display_help
+    exit 1
 fi
