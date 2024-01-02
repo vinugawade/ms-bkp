@@ -1,118 +1,115 @@
 #!/bin/bash
-# Script to backup all mysql databases as separate compressed files.
-# Creator :- Vinay Gawade.
-# Twitter :- @VinuGawade
 
-# ms-bkp script version.
-VERSION="1.0.0"
+# Get the current date in format DD-MM-YYYY
+NOW=$(date +"%d-%m-%Y")
 
-# TODO not required this once config options are complete.
-if [ -f .env ]; then
-	export $(echo $(cat .env | sed 's/#.*//g' | xargs) | envsubst)
-fi
+# Function to export databases
+function export_dbs() {
+    local BACKUP_PATH="$1"
+    local MYSQL_USER="$2"
+    local MYSQL_PASSWORD="$3"
 
-# Paths to programs
-MYSQL="$(which mysql)"
-MYSQLDUMP="$(which mysqldump)"
-CHOWN="$(which chown)"
-CHMOD="$(which chmod)"
-GZIP="$(which gzip)"
+    # Exclude default databases
+    IGNORE=("test" "information_schema" "mysql" "performance_schema" "sys")
+    IGNORE_STR=$(printf "'%s'," "${IGNORE[@]}")
+    IGNORE_STR=${IGNORE_STR%,}
 
-# Misc vars
-NOW="$(date +"%d-%m-%Y")"
+    # Check and create the backup path
+    if [[ -z "$BACKUP_PATH" ]]; then
+        # Create the backup path in the Downloads folder based on the user's operating system
+        BACKUP_PATH="$HOME/Downloads"
+    fi
 
-BACKUP_PATH+="$BKP_PATH/BKP-$NOW"
-MYSQL_LOGIN="-u $MYSQL_USER -h $MYSQL_HOST"
+    # Create the path if it doesn't exist
+    [ ! -d "$BACKUP_PATH" ] && mkdir -p "$BACKUP_PATH" || echo "$BACKUP_PATH exists"
 
-# Function to display error/help messages.
-function show_msg() {
-	[[ $1 == "invalid" ]] && echo "Invalid option" && exit 1
-	[[ $1 == "help" ]] && echo "Usage:
-ms-bkp [option]
-Backup all mysql tables as separate compressed files.
-Options:
-	-c,  --configs              display saved configs
-	-sc, --set-config           set mysql username, password & host
-	-e,  --exclude-db           add database to ignore backup list
-	-i,  --include-db           remove database from ignore backup list
-	-h,  --help                 display help and exit
-	-v,  --version              display ms-bkp script version"
+    # Check if the path was created successfully
+    if [[ ! -d "$BACKUP_PATH" ]]; then
+        echo "Failed to create the backup path: $BACKUP_PATH"
+        exit 1
+    fi
+
+    # Export databases
+    databases=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;" --skip-column-names | grep -Ev "^($IGNORE_STR)$" | grep -Ev "performance_schema")
+    for db in $databases; do
+        compress_db "$BACKUP_PATH" "$db" "$MYSQL_USER" "$MYSQL_PASSWORD"
+    done
+
+    # Change permissions of the backup folder
+    change_permissions "$BACKUP_PATH"
+
+    # Open the backup folder
+    open_bkp_dir "$BACKUP_PATH"
 }
 
-# Function to export databases.
-function export_db() {
-	if [ "$MYSQL_PASS" ]; then
-		MYSQL_LOGIN+=" -p$MYSQL_PASS"
-	fi
+# Function to compress and timestamp the exported databases
+function compress_db() {
+    local backup_path="$1"
+    local database="$2"
+    local mysql_user="$3"
+    local mysql_password="$4"
 
-	# Check backup path and create it if necessary
-	DBS="$($MYSQL $MYSQL_LOGIN -Bse 'show databases')"
+    local timestamp=$(date +"%H-%M-%S")
+    local output_folder="$backup_path/MYSQL-BKP-$NOW"
 
-	# Create path yif it doesn't exist
-	[ ! -d $BACKUP_PATH ] && mkdir -p $BACKUP_PATH || echo -e "$BACKUP_PATH exist \n"
+    # Create the directory for the current database
+    mkdir -p "$output_folder"
 
-	# Change permissions so anyone can access backups
-	$CHOWN -R "$(id -u):$(id -g)" $BKP_PATH
-	$CHMOD -R 0777 $BKP_PATH
+    local output_file="$output_folder/$database.sql.gz"
 
-	for DB in $DBS; do
-		# Regular expression that checks if the database name is in the `IGNORE` variable.
-		if [[ "$IGNORE" =~ .*"$DB"*. ]]; then
-			echo -e "$(date +"%d-%m-%Y %H:%M:%S") Skipping $DB.\n"
-			continue
-		fi
+    mysqldump -u "$mysql_user" -p"$mysql_password" "$database" | gzip > "$output_file"
 
-		# Loop that loops through all the databases on the server and backs them up.
-		echo -e "$(date +"%d-%m-%Y %H:%M:%S") Backing up $DB.\n"
-		FILE="$BACKUP_PATH/$DB.sql.gz"
-		$MYSQLDUMP $MYSQL_LOGIN $DB | $GZIP --best > $FILE
-		echo -e "$(date +"%d-%m-%Y %H:%M:%S") \xE2\x9C\x94 $DB Backup Done!\n"
-	done
-
-	echo -e "$(date +"%d-%m-%Y %H:%M:%S") \xE2\x9C\x94 All Database Backup at $BACKUP_PATH\n"
+    echo "Backup created: $output_file"
 }
 
-# Function to open the backup folder after the backup is complete.
+# Function to change permissions of backup folder based on the user's operating system
+function change_permissions() {
+    local path="$1"
+
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+        chmod o+rwx "$path"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        chmod o+rwx "$path"
+    elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin" ]]; then
+        # Windows/MinGW/Cygwin
+        icacls "$path" /grant:r "Everyone:(OI)(CI)(F)" > /dev/null 2>&1
+    else
+        echo "Changing permissions is not supported on your operating system."
+    fi
+}
+
+# Function to open the backup folder based on the user's operating system
 function open_bkp_dir() {
-	read -p "Open $BACKUP_PATH Folder?(y/n)[n] " -n 1 -r
-	echo
-	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-			nautilus $BKP_PATH & > /dev/null
-		elif [[ "$OSTYPE" == "darwin"* ]]; then
-			open $BKP_PATH > /dev/null
-		fi
-	fi
-	exit 0
+    local path="$1"
+
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+        xdg-open "$path"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        open "$path"
+    elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin" ]]; then
+        # Windows/MinGW/Cygwin
+        explorer.exe "$path"
+    else
+        echo "Opening the backup folder is not supported on your operating system."
+    fi
 }
 
-# Check input value.
-if [ $# -gt 1 ]; then
-	echo "Too many arguments:- $*"
-	exit 1
+# Check if MySQL username and password were provided as arguments
+if [[ $# -eq 3 ]]; then
+    MYSQL_USER="$1"
+    MYSQL_PASSWORD="$2"
+    export_dbs "$3" "$MYSQL_USER" "$MYSQL_PASSWORD"
 else
-	# Check input and show messages as per options.
-	if [[ ($* == "--help") || ($* == "-h") ]]; then
-		show_msg help
-	elif [[ ($* == "--version") || ($* == "-v") ]]; then
-		echo -e "ms-bkp v${VERSION} \nVisit :- https://vinugawade.github.io/ms-bkp"
-	elif [[ ($* == "--configs") || ($* == "-c") ]]; then
-		echo -e "ms-bkp show all configs"
-	elif [[ ($* == "--set-config") || ($* == "-sc") ]]; then
-		echo -e "ms-bkp init config"
-	elif [[ ($* == "--exclude-db") || ($* == "-e") ]]; then
-		echo -e "ms-bkp add DB in ignore list"
-	elif [[ ($* == "--include-db") || ($* == "-i") ]]; then
-		echo -e "ms-bkp remove DB from ignore list"
-	else
-		# If the script is being run with no arguments. If it is,
-		# it will run the `export_db` and then the `open_bkp_dir` function.
-		if [ $# -eq 0 ]; then
-			export_db
-			open_bkp_dir
-		else
-			show_msg invalid
-		fi
-	fi
-	exit 0
+    # Prompt the user for MySQL credentials and export path
+    echo "MySQL credentials required:"
+    read -p "MySQL username: " MYSQL_USER
+    read -s -p "MySQL password: " MYSQL_PASSWORD
+    echo
+    read -p "Export path (leave empty for default): " EXPORT_PATH
+
+    export_dbs "$EXPORT_PATH" "$MYSQL_USER" "$MYSQL_PASSWORD"
 fi
