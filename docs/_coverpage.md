@@ -1,6 +1,6 @@
 <!-- _coverpage.md -->
 
-<!-- ![logo](images/logo.webp ':rel="preload"') -->
+![logo](images/logo.webp)
 
 > Bash script to backup all mysql databases as separate compressed files.
 
