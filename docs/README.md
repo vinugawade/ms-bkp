@@ -15,43 +15,47 @@ If you need to backup MySQL databases on a Linux system, the `ms-bkp` script pro
 
 ## Installation 🚀
 
-Clone [ms-bkp](https://github.com/vinugawade/ms-bkp) repository to your local machine using the command below.
+1. **Clone the Repository:**
+    - Clone the [ms-bkp](https://github.com/vinugawade/ms-bkp) repository to your local machine using the following command:
 
-```bash
-git clone https://github.com/vinugawade/ms-bkp.git
-```
+    ```bash
+    git clone https://github.com/vinugawade/ms-bkp.git
+    ```
 
-Move the script to a global location on your system using the command below.
+2. **Move the Script to a Global Location:**
+    - Move the script to a global location on your system using the following command:
 
-```bash
-sudo mv /location/of/ms-bkp /usr/local/bin
-```
+    ```bash
+    sudo mv /location/of/ms-bkp /usr/local/bin
+    ```
 
-Allow everyone to execute the script using one of the following commands.
+3. **Set Script Permissions:**
+    - Allow everyone to execute the script by choosing one of the following commands:
 
-```bash
-sudo chmod +x /location/of/ms-bkp
-```
+    ```bash
+    sudo chmod +x /location/of/ms-bkp
+    ```
 
-OR
+    OR
 
-```bash
-sudo chmod 0755 /location/of/ms-bkp
-```
+    ```bash
+    sudo chmod 0755 /location/of/ms-bkp
+    ```
 
-Add `/usr/local/bin` to your `$PATH`. If you use the Bash shell, you can do this by running the command below.
+4. **Add to $PATH:**
+    - Add `/usr/local/bin` to your `$PATH`. If you use the Bash shell, execute the command:
 
-```bash
-export PATH=$PATH:/usr/local/bin
-```
+    ```bash
+    export PATH=$PATH:/usr/local/bin
+    ```
 
-OR
+    OR
 
-```bash
-export PATH=$PATH:/location/of/ms-bkp
-```
+    ```bash
+    export PATH=$PATH:/location/of/ms-bkp
+    ```
 
-This will set the variable name, potentially in a file called `~/.bash_profile`, `~/.bashrc`, or `~/.profile`. The difference between these files is (primarily) when they get read by the shell. If you're not sure where to put it, then `~/.bashrc` is a good choice.
+    This will set the variable name, potentially in a file like `~/.bash_profile`, `~/.bashrc`, or `~/.profile`. If you're unsure where to put it, `~/.bashrc` is a good choice.
 
 > **You may need to restart your shell for this to take effect.**
 
