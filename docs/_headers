@@ -1,18 +1,2 @@
-# Enable text compression for text-based assets
-*.html text/html
-*.css text/css
-*.js text/javascript
-*.json application/json
-*.xml application/xml
-*.txt text/plain
-
-# Cache policies (adjust the values based on your needs)
 /docs/images/*
   Cache-Control: public, max-age=604800
-
-# Enable CORS for font files (adjust the font file extensions as needed)
-*.woff2 Access-Control-Allow-Origin: *
-*.woff Access-Control-Allow-Origin: *
-*.ttf Access-Control-Allow-Origin: *
-*.otf Access-Control-Allow-Origin: *
-*.eot Access-Control-Allow-Origin: *
