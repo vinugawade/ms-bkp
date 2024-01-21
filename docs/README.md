@@ -87,7 +87,7 @@ ms-bkp -u your_mysql_user -p your_mysql_password -s db1,db2,db3 -d /path/to/back
 
 Check below attached GIF.
 
-![Run ms-bkp script](assets/images/..)
+![Run ms-bkp script](images/feature.gif)
 
 ---
 
