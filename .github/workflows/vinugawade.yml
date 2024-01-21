@@ -3,8 +3,8 @@ name: "Vinu's DevCard"
 on:
   workflow_dispatch:
   push:
-    branches:
-      - master
+    branches-ignore:
+      - 'dependabot/**'
   schedule:
     - cron: "0 0 * * *"
 
