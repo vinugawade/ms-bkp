@@ -89,13 +89,41 @@ Check below attached GIF.
 
 ## Maintainer 👨🏻‍💻
 
-<a href="https://vinux.in"><img src="https://api.daily.dev/devcards/c8457c6e687d407197d39cfaf513c57a.png?r=qqh" width="400" alt="Vinay Gawade's Dev Card"/></a>
+<a href="https://vinux.in">
+  <img
+    src="https://api.daily.dev/devcards/c8457c6e687d407197d39cfaf513c57a.png?r=qqh"
+    width="400"
+    height=""
+    alt="Vinay Gawade's Dev Card"
+  />
+</a>
 
-Built With 💙✨ By [Vinay Gawade](https://github.com/vinugawade).
+Built With 💙✨ By <a href="https://github.com/vinugawade">Vinay Gawade</a>.
 
-<a href="https://www.linkedin.com/in/vinu-gawade" target="_blank"><img src="https://github.com/vinugawade/vinugawade/blob/main/assets/images/media/LinkedIn.png?raw=true" alt="logo" width="150"></a>
-<a href="https://www.buymeacoffee.com/vinaygawade" target="_blank"><img src="https://github.com/vinugawade/vinugawade/blob/main/assets/images/media/Bmc.png?raw=true" alt="logo" width="150"></a>
-<a href="https://twitter.com/VinuGawade" target="_blank"><img src="https://github.com/vinugawade/vinugawade/blob/main/assets/images/media/Twitter.png?raw=true" alt="logo" width="150"></a>
+<a href="https://www.linkedin.com/in/vinu-gawade" target="_blank">
+  <img
+    src="https://github.com/vinugawade/vinugawade/blob/main/assets/images/media/LinkedIn.png?raw=true"
+    alt="LinkedIn Logo"
+    width="150"
+    height=""
+  />
+</a>
+<a href="https://www.buymeacoffee.com/vinaygawade" target="_blank">
+  <img
+    src="https://github.com/vinugawade/vinugawade/blob/main/assets/images/media/Bmc.png?raw=true"
+    alt="Buy Me a Coffee Logo"
+    width="150"
+    height=""
+  />
+</a>
+<a href="https://twitter.com/VinuGawade" target="_blank">
+  <img
+    src="https://github.com/vinugawade/vinugawade/blob/main/assets/images/media/Twitter.png?raw=true"
+    alt="Twitter Logo"
+    width="150"
+    height=""
+  />
+</a>
 
 ---
 
@@ -103,4 +131,4 @@ Built With 💙✨ By [Vinay Gawade](https://github.com/vinugawade).
 
 ![LICENSE](https://img.shields.io/github/license/vinugawade/ms-bkp?style=flat-square)
 
-This project is licensed under the [LICENSE](../LICENSE) file associated with this repository.
+This project is licensed under the [LICENSE](https://github.com/vinugawade/ms-bkp/blob/master/LICENSE) file associated with this repository.

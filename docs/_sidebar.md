@@ -1,3 +1,3 @@
--   [Getting Started](/)
+- [Getting Started 🏁](/)
 
--   [Contribution Guidelines](contribution-guidelines.md)
+- [Contribution Guidelines 🤝](contribution-guidelines.md)

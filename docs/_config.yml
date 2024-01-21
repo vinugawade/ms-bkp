@@ -1,0 +1,8 @@
+include:
+  - "*.css"
+  - "*.html"
+  - "*.js"
+  - "*.md"
+
+plugins:
+  - jekyll-gzip
