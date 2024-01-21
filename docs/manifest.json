@@ -1,6 +1,6 @@
 {
-  "name": "MySQL Database Backup",
-  "short_name": "MS-BKP",
+  "name": "ms-bkp docs",
+  "short_name": "ms-bkp",
   "description": "A script for backing up MySQL databases",
   "start_url": "./ms-bkp",
   "display": "standalone",
