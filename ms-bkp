@@ -1,34 +1,55 @@
 #!/bin/bash
 
+# MySQL Database Backup Script
+
 # Get the current date in format DD-MM-YYYY
 NOW=$(date +"%d-%m-%Y")
 
 # Define default values
 DEFAULT_BACKUP_PATH="$HOME/Downloads"
 DEFAULT_ONLY_DB=""
+DEFAULT_SKIP_DB=""
 
 # Function to export databases
 function export_dbs() {
     local BACKUP_PATH="$1"
     local MYSQL_USER="$2"
     local MYSQL_PASSWORD="$3"
+    local ONLY_DB="$4"
+    local SKIP_DB="$5"
 
     # Exclude default databases
     IGNORE=("test" "information_schema" "mysql" "performance_schema" "sys")
 
-    # TODO: fix multiple skip dbs not working like db1,db2 or db1, db2
-    # Prompt the user for databases to skip
-    read -p "Enter databases to skip (comma-separated): " SKIP_DATABASES
-    read -ra SKIP_ARRAY <<< "$SKIP_DATABASES"
-    IGNORE+=("${SKIP_ARRAY[@]}")
+    # Add user-provided databases to skip
+    IFS=',' read -ra USER_SKIP_ARRAY <<< "$SKIP_DB"
+    IGNORE+=("${USER_SKIP_ARRAY[@]}")
+
+    # Use default values if not provided
+    BACKUP_PATH=${BACKUP_PATH:-$DEFAULT_BACKUP_PATH}
 
     # Check and create the backup path
-    BACKUP_PATH=${BACKUP_PATH:-$DEFAULT_BACKUP_PATH}
     [ ! -d "$BACKUP_PATH" ] && mkdir -p "$BACKUP_PATH" || echo "$BACKUP_PATH exists"
 
     # Check if the path was created successfully
     if [[ ! -d "$BACKUP_PATH" ]]; then
-        echo "Failed to create the backup path: $BACKUP_PATH"
+        echo "Error: Failed to create the backup path: $BACKUP_PATH"
+        exit 1
+    fi
+
+    # Prompt the user for MySQL username and password if not provided as options
+    if [ -z "$MYSQL_USER" ]; then
+        read -p "Enter MySQL username: " MYSQL_USER
+    fi
+
+    if [ -z "$MYSQL_PASSWORD" ]; then
+        read -s -p "Enter MySQL password: " MYSQL_PASSWORD
+        echo
+    fi
+
+    # Check if MySQL connection is successful
+    if ! mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SELECT 1;" > /dev/null 2>&1; then
+        echo "Error: MySQL connection failed. Check your username and password."
         exit 1
     fi
 
@@ -37,9 +58,9 @@ function export_dbs() {
         compress_db "$BACKUP_PATH" "$ONLY_DB" "$MYSQL_USER" "$MYSQL_PASSWORD"
     else
         databases=$(mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW DATABASES;" --skip-column-names | grep -Ev "$(IFS="|"; echo "${IGNORE[*]}")")
-        for db in $databases; do
+        while IFS= read -r db; do
             compress_db "$BACKUP_PATH" "$db" "$MYSQL_USER" "$MYSQL_PASSWORD"
-        done
+        done <<< "$databases"
     fi
 
     # Change permissions of the backup folder
@@ -66,18 +87,20 @@ function compress_db() {
 
     mysqldump -u "$mysql_user" -p"$mysql_password" "$database" | gzip > "$output_file"
 
-    echo "Backup created: $output_file"
+    # Check if mysqldump was successful
+    if [[ $? -eq 0 ]]; then
+        echo "Backup created: $output_file"
+    else
+        echo "Error: Backup creation failed for database: $database"
+    fi
 }
 
 # Function to change permissions of backup folder based on the user's operating system
 function change_permissions() {
     local path="$1"
 
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        chmod o+rwx "$path"
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
+    if [[ "$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "darwin"* ]]; then
+        # Linux or macOS
         chmod o+rwx "$path"
     elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin" ]]; then
         # Windows/MinGW/Cygwin
@@ -109,11 +132,12 @@ function open_bkp_dir() {
 function display_help() {
     echo "Usage: $(basename "$0") [OPTIONS]
 Options:
-  -u, --user          MySQL username
-  -p, --password      MySQL password
-  -o, --only-db       Export only the specified database
-  -d, --destination   Destination path for the backup (default: $DEFAULT_BACKUP_PATH)
-  -h, --help          Display this help message"
+  -u, --user      MySQL username
+  -p, --password  MySQL password
+  -o, --only      Export only the specified database
+  -s, --skip      Skip specified databases during export (comma-separated)
+  -d, --dest      Destination path for the backup (default: $DEFAULT_BACKUP_PATH)
+  -h, --help      Display this help message"
 }
 
 # Parse the command-line options
@@ -129,13 +153,18 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-        -o|--only-db)
+        -o|--only)
             ONLY_DB="$2"
             shift
             shift
             ;;
-        -d|--destination)
-            DEFAULT_BACKUP_PATH="$2"
+        -s|--skip)
+            SKIP_DB="$2"
+            shift
+            shift
+            ;;
+        -d|--dest)
+            DESTINATION_PATH="$2"
             shift
             shift
             ;;
@@ -144,17 +173,52 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo "Invalid option: $1"
+            echo "Error: Invalid option: $1"
             display_help
             exit 1
             ;;
     esac
 done
 
-# Check if MySQL username and password were provided as options
-if [[ -n "$MYSQL_USER" && -n "$MYSQL_PASSWORD" ]]; then
-    export_dbs "$DEFAULT_BACKUP_PATH" "$MYSQL_USER" "$MYSQL_PASSWORD"
-else
-    display_help
+# If MySQL username and password are not provided as options, prompt the user
+if [ -z "$MYSQL_USER" ]; then
+    read -p "Enter MySQL username: " MYSQL_USER
+fi
+
+if [ -z "$MYSQL_PASSWORD" ]; then
+    read -s -p "Enter MySQL password: " MYSQL_PASSWORD
+    echo
+fi
+
+# Check if destination path is not provided as an option, prompt the user
+if [ -z "$DESTINATION_PATH" ]; then
+    read -p "Enter destination path for the backup (default: $DEFAULT_BACKUP_PATH): " DESTINATION_PATH
+    DESTINATION_PATH=${DESTINATION_PATH:-$DEFAULT_BACKUP_PATH}
+fi
+
+# Check if the destination path is created successfully
+[ ! -d "$DESTINATION_PATH" ] && mkdir -p "$DESTINATION_PATH"
+
+# Check if the path was created successfully
+if [[ ! -d "$DESTINATION_PATH" ]]; then
+    echo "Error: Failed to create the backup path: $DESTINATION_PATH"
     exit 1
 fi
+
+# If -o option is provided, set ONLY_DB to the provided value
+if [ -n "$ONLY_DB" ]; then
+    SKIP_DB_PROVIDED=true
+fi
+
+# If -s option is provided, set SKIP_DB to the provided value
+if [ -n "$SKIP_DB" ]; then
+    ONLY_DB_PROVIDED=true
+fi
+
+# Check if skip db input is required
+if [ -z "$SKIP_DB" ] && [ "$SKIP_DB_PROVIDED" != true ]; then
+    read -p "Enter databases to skip (comma-separated): " SKIP_DB
+fi
+
+# Call the export function with provided or prompted values
+export_dbs "$DESTINATION_PATH" "$MYSQL_USER" "$MYSQL_PASSWORD" "$ONLY_DB" "$SKIP_DB"
