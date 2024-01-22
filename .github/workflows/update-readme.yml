@@ -11,9 +11,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          ref: v2
+        uses: actions/checkout@v3
 
       - name: Copy docs/README.md to README.md
         run: cp docs/README.md README.md
