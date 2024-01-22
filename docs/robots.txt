@@ -1,0 +1,19 @@
+User-agent: *
+Disallow: /docs/_headers
+Disallow: /docs/images/
+Disallow: /docs/hi-in/
+Disallow: /docs/LICENSE
+Disallow: /docs/manifest.json
+Disallow: /docs/sw.js
+
+User-agent: Googlebot
+Allow: /docs/
+
+# Allow all popular file types
+Allow: /docs/**/*.md
+Allow: /docs/**/*.png
+Allow: /docs/**/*.jpg
+Allow: /docs/**/*.jpeg
+Allow: /docs/**/*.gif
+Allow: /docs/**/*.svg
+Allow: /docs/**/*.ico
