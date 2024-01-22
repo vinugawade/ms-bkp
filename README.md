@@ -9,7 +9,7 @@
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/vinugawade/ms-bkp?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/vinugawade/ms-bkp?style=flat-square)
 
-If you need to backup MySQL databases on a Linux system, the `ms-bkp` script provides an easy-to-use solution. It allows you to export databases, skip specific ones, and set the destination path for the backup.
+If you need to backup MySQL databases on a **Linux / MacOS / Windows** system, the `ms-bkp` script provides an easy-to-use solution. It allows you to export databases, skip specific ones, and set the destination path for the backup.
 
 ---
 
