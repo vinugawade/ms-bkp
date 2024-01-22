@@ -59,13 +59,13 @@
   ],
   "screenshots": [
     {
-      "src": "/images/preview.png",
+      "src": "images/preview.png",
       "type": "image/png",
       "sizes": "1355x622",
       "form_factor": "wide"
     },
     {
-      "src": "/images/preview.png",
+      "src": "images/preview.png",
       "type": "image/png",
       "sizes": "1355x622"
     }

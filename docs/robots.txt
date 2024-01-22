@@ -1,8 +1,6 @@
 User-agent: *
 Disallow: /docs/_headers
-Disallow: /docs/images/
 Disallow: /docs/hi-in/
-Disallow: /docs/LICENSE
 Disallow: /docs/manifest.json
 Disallow: /docs/sw.js
 
