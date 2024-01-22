@@ -1,8 +1,9 @@
 {
+  "id": "/?source=pwa",
   "name": "ms-bkp docs",
   "short_name": "ms-bkp",
   "description": "A script for backing up MySQL databases",
-  "start_url": "./ms-bkp",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
@@ -39,15 +40,34 @@
     },
     {
       "src": "images/android/icon.png",
-      "sizes": "512x512",
+      "sizes": "500x500",
       "type": "image/png",
       "density": "5.0"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "density": "6.0"
     },
     {
       "src": "images/android/mipmap-xxxhdpi/icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/preview.png",
+      "type": "image/png",
+      "sizes": "1355x622",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/preview.png",
+      "type": "image/png",
+      "sizes": "1355x622"
     }
   ]
 }
