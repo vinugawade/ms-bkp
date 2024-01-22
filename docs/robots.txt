@@ -4,7 +4,6 @@ Disallow: /docs/hi-in/
 Disallow: /docs/manifest.json
 Disallow: /docs/sw.js
 
-User-agent: Googlebot
 Allow: /docs/
 
 # Allow all popular file types
